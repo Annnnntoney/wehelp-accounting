@@ -18,24 +18,24 @@
 
 ## 10/5（一）路由與資料
 
-- [ ] `types/record.ts`：`AccountRecord`
-- [ ] `lib/records.ts`：建立紀錄、刪除、小計、驗證（純函式）
-- [ ] `lib/records.test.ts`：CICD.md §5.1 的案例
-- [ ] 清掉 create-next-app 範例內容（`page.module.css`、`public/*.svg`）
-- [ ] `app/page.tsx` 首頁：Header、Banner、「點此開始」→ `/accounting`
+- [x] `types/record.ts`：`AccountRecord`
+- [x] `lib/records.ts`：建立紀錄、刪除、小計、驗證（純函式）
+- [x] `lib/records.test.ts`：CICD.md §5.1 的案例
+- [x] 清掉 create-next-app 範例內容（`page.module.css`、`public/*.svg`）
+- [x] `app/page.tsx` 首頁：Header、Banner、「點此開始」→ `/accounting`
 
 ## 10/6（二）記帳頁
 
-- [ ] `app/accounting/page.tsx`：`'use client'`，`useState<AccountRecord[]>`
-- [ ] `components/RecordForm.tsx`：收入／支出、金額、說明、新增紀錄；送出後清空
-- [ ] `components/RecordList.tsx`：金額＋說明＋刪除；支出紅、收入綠
-- [ ] 小計、「返回首頁」
-- [ ] 每塊一條 `feat/*` 分支、一個 PR，看 Preview 網址
+- [x] `app/accounting/page.tsx`：`'use client'`，`useState<AccountRecord[]>`
+- [x] `components/RecordForm.tsx`：收入／支出、金額、說明、新增紀錄；送出後清空
+- [x] `components/RecordList.tsx`：金額＋說明＋刪除；支出紅、收入綠
+- [x] 小計、「返回首頁」
+- [x] 每塊一條 `feat/*` 分支、一個 PR，看 Preview 網址
 
 ## 10/7（三）樣式與 E2E
 
-- [ ] 對照簡報截圖收斂樣式（Header 深藍灰、Banner 淺藍、置中）
-- [ ] 手機寬度不破版
+- [x] 對照簡報截圖收斂樣式（Header 深藍灰、Banner 淺藍、置中）
+- [x] 手機寬度不破版
 - [ ] （選）`localStorage` 保存紀錄
 - [ ] Playwright smoke，打開 `ci.yml` 的 `e2e` job（CICD.md §5.2）
 
@@ -48,7 +48,7 @@
 ## 10/9（五）繳交
 
 - [ ] 私訊講師：Vercel 網址 + GitHub repo 連結
-- [ ] repo 若是 private，記得把講師加成 collaborator
+- [x] repo 是 public，講師可直接看
 
 ## 本週驗收
 
