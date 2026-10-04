@@ -4,11 +4,11 @@ WeHelp 最後階段第一週前端任務：Accounting 記帳小工具。
 
 ## 網站
 
-| 環境   | 連結                        |
-| ------ | --------------------------- |
-| 線上   | （部署到 Vercel 後填入）    |
-| 本機   | http://localhost:3000       |
-| 原始碼 | （建好 GitHub repo 後填入） |
+| 環境   | 連結                                             |
+| ------ | ------------------------------------------------ |
+| 線上   | https://wehelp-accounting-iota.vercel.app        |
+| 本機   | http://localhost:3000                            |
+| 原始碼 | https://github.com/Annnnntoney/wehelp-accounting |
 
 ## 技術
 

@@ -11,9 +11,9 @@
 - [x] CI：`.github/workflows/ci.yml`（lint／type／format／test、build、gitleaks）
 - [x] PR template、README、規格書、CI/CD 計劃
 - [x] `git init` + 第一個 commit
-- [ ] GitHub 建 repo，push `main`
-- [ ] 確認 Actions 第一次跑綠燈
-- [ ] Vercel 匯入 repo，拿到 Production 網址，填回 README
+- [x] GitHub 建 repo，push `main`
+- [x] 確認 Actions 第一次跑綠燈
+- [x] Vercel 匯入 repo，拿到 Production 網址，填回 README
 - [ ] `main` 開 branch protection（見 CICD.md §4）
 
 ## 10/5（一）路由與資料
