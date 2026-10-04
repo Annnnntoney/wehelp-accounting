@@ -1,7 +1,7 @@
 # 零基礎教學：用 Next.js 做記帳小工具，並自動部署到 Vercel
 
 > 給完全沒寫過 React 的人。照順序做，每一步都會告訴你「打什麼、點哪裡、應該看到什麼」。
-> 本文的程式碼都在本機實際跑過：ESLint、TypeScript、12 個單元測試、production build 全部通過，畫面截圖也是實際執行的結果。
+> 本文的程式碼都在本機實際跑過：ESLint、TypeScript、13 個單元測試、production build 全部通過，畫面截圖也是實際執行的結果。
 
 ---
 
@@ -369,7 +369,11 @@ export interface RecordInput {
 
 export type CreateResult = { ok: true; record: AccountRecord } | { ok: false; error: string }
 
-export function createRecord(input: RecordInput): CreateResult {
+/** createId 預設用瀏覽器內建的 UUID；測試時可以傳固定值，讓結果完全可預測 */
+export function createRecord(
+  input: RecordInput,
+  createId: () => string = () => crypto.randomUUID()
+): CreateResult {
   const amount = Number(input.amount)
   const description = input.description.trim()
 
@@ -383,7 +387,7 @@ export function createRecord(input: RecordInput): CreateResult {
   return {
     ok: true,
     record: {
-      id: crypto.randomUUID(),
+      id: createId(),
       amount: input.type === 'income' ? amount : -amount,
       description,
     },
@@ -405,7 +409,7 @@ export function calcSubtotal(records: AccountRecord[]): number {
 - **`CreateResult`**：成功時回傳 `{ ok: true, record }`，失敗時回傳 `{ ok: false, error }`。呼叫的人用 `result.ok` 判斷，TypeScript 會自動知道哪個情況有 `record`、哪個有 `error`。
 - **`Number.isInteger(amount)`**：`Number('')` 是 `0`、`Number('abc')` 是 `NaN`、`Number('1.5')` 是 `1.5`，這行一次擋掉這些情況。
 - **`.trim()`**：去掉前後空白，只打空白鍵也算沒填。
-- **`crypto.randomUUID()`**：瀏覽器內建，產生像 `3b241101-e2bb-4255-8caf-4136c566a962` 的唯一 id。
+- **`createId` 參數**：id 預設用瀏覽器內建的 `crypto.randomUUID()` 產生（像 `3b241101-e2bb-4255-8caf-4136c566a962`）。把它做成參數而不是寫死在函式裡，測試時就能傳 `() => 'fixed'`，同樣的輸入永遠得到同樣的結果，這樣才算真正的純函式。
 - **`filter`**：回傳一個「新的」陣列，留下 id 不一樣的。**不要直接改原陣列**（例如 `splice`），React 是靠「換成新陣列」才知道資料變了。
 - **`reduce`**：從 `0` 開始，一筆一筆加上去。
 
@@ -434,6 +438,11 @@ describe('createRecord', () => {
   it('支出存成負數', () => {
     const result = createRecord({ type: 'expense', amount: '500', description: '咖啡' })
     expect(result.ok && result.record.amount).toBe(-500)
+  })
+
+  it('用傳入的 createId 產生 id', () => {
+    const result = createRecord({ type: 'income', amount: '1', description: '測試' }, () => 'fixed')
+    expect(result.ok && result.record.id).toBe('fixed')
   })
 
   it('去掉說明前後空白', () => {
@@ -481,7 +490,7 @@ describe('removeRecord', () => {
 pnpm test
 ```
 
-應該看到 `Tests  12 passed (12)`。
+應該看到 `Tests  13 passed (13)`。
 
 ### 5.4 全站外框：`app/layout.tsx`
 
@@ -628,6 +637,9 @@ body {
 
 .record-list__description {
   flex: 1;
+  /* 沒有空白的長字串（例如網址）也能在窄螢幕換行，不會撐破版面 */
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .record-list__empty {
@@ -658,6 +670,7 @@ body {
 - `box-sizing: border-box`：寬度包含 padding 和邊框，排版比較直覺，幾乎每個專案都會加。
 - `display: flex` + `justify-content: center`：水平置中最常用的寫法。
 - `flex-wrap: wrap`：放不下時自動換行，**手機版不破版就靠這行**。
+- `min-width: 0` + `overflow-wrap: anywhere`：flex 項目預設不會比內容窄，遇到很長的網址會撐破畫面；加這兩行才會乖乖換行。
 - class 命名 `record-form__row`：`區塊__元素`，一看就知道屬於哪個組件（BEM 命名法的簡化版）。
 
 ### 5.6 首頁：`app/page.tsx`

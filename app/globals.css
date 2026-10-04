@@ -113,6 +113,9 @@ body {
 
 .record-list__description {
   flex: 1;
+  /* 沒有空白的長字串（例如網址）也能在窄螢幕換行，不會撐破版面 */
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .record-list__empty {

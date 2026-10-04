@@ -8,7 +8,11 @@ export interface RecordInput {
 
 export type CreateResult = { ok: true; record: AccountRecord } | { ok: false; error: string }
 
-export function createRecord(input: RecordInput): CreateResult {
+/** createId 預設用瀏覽器內建的 UUID；測試時可以傳固定值，讓結果完全可預測 */
+export function createRecord(
+  input: RecordInput,
+  createId: () => string = () => crypto.randomUUID()
+): CreateResult {
   const amount = Number(input.amount)
   const description = input.description.trim()
 
@@ -22,7 +26,7 @@ export function createRecord(input: RecordInput): CreateResult {
   return {
     ok: true,
     record: {
-      id: crypto.randomUUID(),
+      id: createId(),
       amount: input.type === 'income' ? amount : -amount,
       description,
     },

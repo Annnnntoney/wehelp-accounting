@@ -20,6 +20,11 @@ describe('createRecord', () => {
     expect(result.ok && result.record.amount).toBe(-500)
   })
 
+  it('用傳入的 createId 產生 id', () => {
+    const result = createRecord({ type: 'income', amount: '1', description: '測試' }, () => 'fixed')
+    expect(result.ok && result.record.id).toBe('fixed')
+  })
+
   it('去掉說明前後空白', () => {
     const result = createRecord({ type: 'income', amount: '1', description: '  薪水  ' })
     expect(result.ok && result.record.description).toBe('薪水')
