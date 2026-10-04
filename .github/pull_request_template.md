@@ -11,6 +11,7 @@
 - [ ] `pnpm lint`、`pnpm typecheck`、`pnpm test` 本機過
 - [ ] `pnpm build` 本機過
 - [ ] 沒有把 `.env*` 或任何 key commit 進來
+- [ ] Sourcery 的審查意見已處理或回覆
 
 ## 畫面
 

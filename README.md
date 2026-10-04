@@ -50,6 +50,19 @@ pnpm dev
 | `pnpm test`         | Vitest 單元測試                 |
 | `pnpm build`        | Production build                |
 
+## AI Code Review
+
+PR 由 [Sourcery](https://sourcery.ai)（GitHub App，public repo 免費）自動審查，設定在 [.sourcery.yaml](./.sourcery.yaml)。
+
+| 在 PR 留言             | 作用                         |
+| ---------------------- | ---------------------------- |
+| `@sourcery-ai review`  | 重新審查                     |
+| `@sourcery-ai summary` | 產生 PR 摘要                 |
+| `@sourcery-ai guide`   | 產生審查者指南               |
+| `@sourcery-ai resolve` | 標記所有 Sourcery 評論已處理 |
+
+不想被審查的 PR 加上 `sourcery-ignore` label。
+
 ## 文件
 
 - **零基礎教學（從頭到尾）**：[docs/TUTORIAL.md](./docs/TUTORIAL.md)
