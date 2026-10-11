@@ -21,7 +21,7 @@ Next.js（App Router）、React、TypeScript、pnpm；Firebase Authentication、
 | `/`           | 未登入：登入系統、註冊帳戶；已登入：顯示帳號、立刻開始、登出    |
 | `/accounting` | 需登入。`Form`（收入／支出、金額、說明）＋ `List`（刪除、小計） |
 
-完整畫面規格見 [docs/SPEC.md](./docs/SPEC.md)。
+第一週的基準規格見 [docs/SPEC.md](./docs/SPEC.md)；第二週的完整做法見 [docs/TUTORIAL-WEEK2.md](./docs/TUTORIAL-WEEK2.md)。
 
 ## 檔案規劃
 
@@ -89,7 +89,7 @@ PR 由 [Sourcery](https://sourcery.ai)（GitHub App，public repo 免費）自�
 
 - **第一週教學**：[docs/TUTORIAL.md](./docs/TUTORIAL.md)
 - **第二週教學（Firebase）**：[docs/TUTORIAL-WEEK2.md](./docs/TUTORIAL-WEEK2.md)
-- 任務規格：[docs/SPEC.md](./docs/SPEC.md)
+- 第一週任務規格：[docs/SPEC.md](./docs/SPEC.md)
 - CI/CD 計劃：[docs/CICD.md](./docs/CICD.md)
 - 待辦與排程：[TODO.md](./TODO.md)
 

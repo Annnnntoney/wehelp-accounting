@@ -1,12 +1,23 @@
 'use client'
 
 import Link from 'next/link'
+import { useState } from 'react'
 import AuthForm from '@/components/AuthForm'
 import { useAuth } from '@/components/AuthProvider'
 import { signIn, signOut, signUp } from '@/lib/auth'
 
 export default function HomePage() {
   const { user } = useAuth()
+  const [signOutError, setSignOutError] = useState('')
+
+  async function handleSignOut() {
+    setSignOutError('')
+    try {
+      await signOut()
+    } catch {
+      setSignOutError('登出失敗，請稍後再試')
+    }
+  }
 
   return (
     <>
@@ -23,10 +34,15 @@ export default function HomePage() {
               <Link href="/accounting" className="button">
                 立刻開始
               </Link>
-              <button type="button" className="button" onClick={() => void signOut()}>
+              <button type="button" className="button" onClick={handleSignOut}>
                 登出
               </button>
             </div>
+            {signOutError && (
+              <p className="form-error" role="alert">
+                {signOutError}
+              </p>
+            )}
           </section>
         )}
 

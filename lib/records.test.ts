@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { MAX_DESCRIPTION_LENGTH, calcSubtotal, parseRecordInput, removeRecord } from './records'
+import {
+  MAX_AMOUNT,
+  MAX_DESCRIPTION_LENGTH,
+  calcSubtotal,
+  parseRecordInput,
+  removeRecord,
+} from './records'
 import type { AccountRecord } from '@/types/record'
 
 describe('parseRecordInput', () => {
@@ -21,6 +27,17 @@ describe('parseRecordInput', () => {
   it.each(['', '0', '-5', '1.5', 'abc', '1e30'])('金額 "%s" 不合法', (amount) => {
     const result = parseRecordInput({ type: 'income', amount, description: '測試' })
     expect(result.ok).toBe(false)
+  })
+
+  it('金額剛好 10 億可以，超過不行', () => {
+    const ok = parseRecordInput({ type: 'income', amount: String(MAX_AMOUNT), description: '獎金' })
+    const tooBig = parseRecordInput({
+      type: 'income',
+      amount: String(MAX_AMOUNT + 1),
+      description: '獎金',
+    })
+    expect(ok.ok).toBe(true)
+    expect(tooBig.ok).toBe(false)
   })
 
   it('說明空白不合法', () => {

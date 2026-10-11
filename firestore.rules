@@ -20,6 +20,8 @@ service cloud.firestore {
     return data.keys().hasOnly(['amount', 'description', 'createdAt'])
       && data.amount is int
       && data.amount != 0
+      && data.amount >= -1000000000
+      && data.amount <= 1000000000
       && data.description is string
       && data.description.size() > 0
       && data.description.size() <= 100

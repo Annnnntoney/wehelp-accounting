@@ -1,6 +1,8 @@
 import type { AccountRecord, NewRecord, RecordType } from '@/types/record'
 
 export const MAX_DESCRIPTION_LENGTH = 100
+/** 單筆金額上限（10 億），安全規則也用同一個數字 */
+export const MAX_AMOUNT = 1_000_000_000
 
 export interface RecordInput {
   type: RecordType
@@ -15,8 +17,11 @@ export function parseRecordInput(input: RecordInput): ParseResult {
   const amount = Number(input.amount)
   const description = input.description.trim()
 
-  if (!Number.isSafeInteger(amount) || amount <= 0) {
+  if (!Number.isInteger(amount) || amount <= 0) {
     return { ok: false, error: '金額請輸入大於 0 的整數' }
+  }
+  if (amount > MAX_AMOUNT) {
+    return { ok: false, error: '單筆金額最多 10 億' }
   }
   if (description === '') {
     return { ok: false, error: '請輸入說明' }

@@ -6,9 +6,11 @@ import type { NewRecord, RecordType } from '@/types/record'
 
 interface RecordFormProps {
   onAdd: (record: NewRecord) => Promise<void>
+  /** 外面還沒準備好（例如紀錄還在讀取）時停用 */
+  disabled?: boolean
 }
 
-export default function RecordForm({ onAdd }: RecordFormProps) {
+export default function RecordForm({ onAdd, disabled = false }: RecordFormProps) {
   const [type, setType] = useState<RecordType>('income')
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
@@ -40,7 +42,8 @@ export default function RecordForm({ onAdd }: RecordFormProps) {
 
   return (
     <form className="record-form" onSubmit={handleSubmit}>
-      <div className="record-form__row">
+      {/* 送出中整組停用：避免使用者趁等待時改了欄位，成功後又被清空 */}
+      <fieldset className="record-form__row" disabled={disabled || submitting}>
         <select
           aria-label="類型"
           value={type}
@@ -67,7 +70,7 @@ export default function RecordForm({ onAdd }: RecordFormProps) {
         <button type="submit" className="button" disabled={submitting}>
           {submitting ? '新增中…' : '新增紀錄'}
         </button>
-      </div>
+      </fieldset>
       {error && (
         <p className="form-error" role="alert">
           {error}

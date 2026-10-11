@@ -1,7 +1,7 @@
 # 第二週教學：記帳小工具接上 Firebase（會員登入 + 雲端資料庫）
 
 > 接續 [第一週教學](./TUTORIAL.md)。照順序做，每一步都說明「做什麼、為什麼這樣做、做完應該看到什麼」。
-> 本文程式碼都實際跑過：ESLint、TypeScript、19 個單元測試、16 個安全規則測試、production build 全部通過；註冊、登入、新增、刪除、回訪、兩個帳號互相看不到資料，都在本機 Emulator 和線上實測過。
+> 本文程式碼都實際跑過：ESLint、TypeScript、20 個單元測試、18 個安全規則測試、production build 全部通過；註冊、登入、新增、刪除、回訪、兩個帳號互相看不到資料，都在本機 Emulator 和線上實測過。
 
 ---
 
@@ -281,6 +281,8 @@ export interface AccountRecord extends NewRecord {
 import type { AccountRecord, NewRecord, RecordType } from '@/types/record'
 
 export const MAX_DESCRIPTION_LENGTH = 100
+/** 單筆金額上限（10 億），安全規則也用同一個數字 */
+export const MAX_AMOUNT = 1_000_000_000
 
 export interface RecordInput {
   type: RecordType
@@ -295,8 +297,11 @@ export function parseRecordInput(input: RecordInput): ParseResult {
   const amount = Number(input.amount)
   const description = input.description.trim()
 
-  if (!Number.isSafeInteger(amount) || amount <= 0) {
+  if (!Number.isInteger(amount) || amount <= 0) {
     return { ok: false, error: '金額請輸入大於 0 的整數' }
+  }
+  if (amount > MAX_AMOUNT) {
+    return { ok: false, error: '單筆金額最多 10 億' }
   }
   if (description === '') {
     return { ok: false, error: '請輸入說明' }
@@ -571,12 +576,23 @@ export default function AuthForm({ title, submitLabel, onSubmit }: AuthFormProps
 'use client'
 
 import Link from 'next/link'
+import { useState } from 'react'
 import AuthForm from '@/components/AuthForm'
 import { useAuth } from '@/components/AuthProvider'
 import { signIn, signOut, signUp } from '@/lib/auth'
 
 export default function HomePage() {
   const { user } = useAuth()
+  const [signOutError, setSignOutError] = useState('')
+
+  async function handleSignOut() {
+    setSignOutError('')
+    try {
+      await signOut()
+    } catch {
+      setSignOutError('登出失敗，請稍後再試')
+    }
+  }
 
   return (
     <>
@@ -593,10 +609,15 @@ export default function HomePage() {
               <Link href="/accounting" className="button">
                 立刻開始
               </Link>
-              <button type="button" className="button" onClick={() => void signOut()}>
+              <button type="button" className="button" onClick={handleSignOut}>
                 登出
               </button>
             </div>
+            {signOutError && (
+              <p className="form-error" role="alert">
+                {signOutError}
+              </p>
+            )}
           </section>
         )}
 
@@ -677,7 +698,7 @@ export async function deleteRecord(uid: string, id: string): Promise<void> {
 ```tsx
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import RecordForm from '@/components/RecordForm'
 import RecordList from '@/components/RecordList'
 import { calcSubtotal, removeRecord } from '@/lib/records'
@@ -690,25 +711,33 @@ interface RecordsPanelProps {
 
 /** 某一個使用者的記帳區。外面用 key={uid} 掛載，換人時整個重來，不會殘留上一個人的資料 */
 export default function RecordsPanel({ uid }: RecordsPanelProps) {
-  /** null：第一批資料還沒回來 */
+  /** null：還沒讀到（讀取中或讀取失敗） */
   const [records, setRecords] = useState<AccountRecord[] | null>(null)
+  const [loadFailed, setLoadFailed] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [error, setError] = useState('')
 
-  // ignore 用來避免「已經離開頁面了，舊的結果才回來」還去改畫面
-  useEffect(() => {
+  /** 回傳取消函式：已經離開頁面了，舊的結果才回來，就不要再去改畫面 */
+  const load = useCallback(() => {
     let ignore = false
     fetchRecords(uid)
       .then((list) => {
         if (!ignore) setRecords(list)
       })
       .catch(() => {
-        if (!ignore) setError('讀取紀錄失敗，請重新整理')
+        if (!ignore) setLoadFailed(true)
       })
     return () => {
       ignore = true
     }
   }, [uid])
+
+  useEffect(() => load(), [load])
+
+  function retry() {
+    setLoadFailed(false)
+    load()
+  }
 
   // 先等資料庫新增成功，拿到 id 後才放進畫面；失敗的話錯誤會丟回 RecordForm 顯示
   async function handleAdd(record: NewRecord) {
@@ -732,13 +761,21 @@ export default function RecordsPanel({ uid }: RecordsPanelProps) {
 
   return (
     <>
-      <RecordForm onAdd={handleAdd} />
+      {/* 第一次讀取完成前不能新增：避免讀取結果回來時蓋掉剛新增的那筆 */}
+      <RecordForm onAdd={handleAdd} disabled={records === null} />
       {error && (
         <p className="form-error" role="alert">
           {error}
         </p>
       )}
-      {records === null ? (
+      {loadFailed ? (
+        <div className="status">
+          <p role="alert">讀取紀錄失敗</p>
+          <button type="button" className="button" onClick={retry}>
+            重新讀取
+          </button>
+        </div>
+      ) : records === null ? (
         <p className="status">載入中…</p>
       ) : (
         <>
@@ -756,6 +793,8 @@ export default function RecordsPanel({ uid }: RecordsPanelProps) {
 
 - `records` 一開始是 `null`：代表「還沒讀到」，顯示「載入中…」。跟「讀到了但是空的」（顯示「目前沒有紀錄」）分開。
 - `ignore`：如果讀取還沒回來使用者就離開了，舊的結果不要再去改畫面。
+- **讀取完成前停用表單**：不然使用者趁讀取時新增一筆，讀取結果回來會把它蓋掉。
+- **讀取失敗**：顯示「讀取紀錄失敗」和「重新讀取」按鈕，不會一直卡在「載入中…」。
 - **`handleAdd`**：`await addRecord` 成功、拿到 id，才放進畫面。
 - **`handleDelete`**：`await deleteRecord` 成功，才從畫面移除；失敗顯示錯誤，紀錄留著。這就是 §1.4 的標準流程。
 
@@ -770,9 +809,11 @@ import type { NewRecord, RecordType } from '@/types/record'
 
 interface RecordFormProps {
   onAdd: (record: NewRecord) => Promise<void>
+  /** 外面還沒準備好（例如紀錄還在讀取）時停用 */
+  disabled?: boolean
 }
 
-export default function RecordForm({ onAdd }: RecordFormProps) {
+export default function RecordForm({ onAdd, disabled = false }: RecordFormProps) {
   const [type, setType] = useState<RecordType>('income')
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
@@ -804,7 +845,8 @@ export default function RecordForm({ onAdd }: RecordFormProps) {
 
   return (
     <form className="record-form" onSubmit={handleSubmit}>
-      <div className="record-form__row">
+      {/* 送出中整組停用：避免使用者趁等待時改了欄位，成功後又被清空 */}
+      <fieldset className="record-form__row" disabled={disabled || submitting}>
         <select
           aria-label="類型"
           value={type}
@@ -831,7 +873,7 @@ export default function RecordForm({ onAdd }: RecordFormProps) {
         <button type="submit" className="button" disabled={submitting}>
           {submitting ? '新增中…' : '新增紀錄'}
         </button>
-      </div>
+      </fieldset>
       {error && (
         <p className="form-error" role="alert">
           {error}
@@ -842,7 +884,7 @@ export default function RecordForm({ onAdd }: RecordFormProps) {
 }
 ```
 
-跟第一週比：`onAdd` 變成非同步，**要等資料庫寫入成功才清空表單**；失敗就保留使用者打的字，不用重打。
+跟第一週比：`onAdd` 變成非同步，**要等資料庫寫入成功才清空表單**；失敗就保留使用者打的字，不用重打。送出中用 `<fieldset disabled>` 把整組欄位停用，避免使用者趁等待時改了內容，成功後又被清空。
 
 ```tsx
 import type { AccountRecord } from '@/types/record'
@@ -963,6 +1005,8 @@ service cloud.firestore {
     return data.keys().hasOnly(['amount', 'description', 'createdAt'])
       && data.amount is int
       && data.amount != 0
+      && data.amount >= -1000000000
+      && data.amount <= 1000000000
       && data.description is string
       && data.description.size() > 0
       && data.description.size() <= 100
@@ -973,15 +1017,16 @@ service cloud.firestore {
 
 逐條看：
 
-| 規則                                                  | 意思                                         |
-| ----------------------------------------------------- | -------------------------------------------- |
-| `allow read, delete: if isOwner(uid)`                 | 只能讀、刪路徑裡 uid 是自己的紀錄            |
-| `allow create: if isOwner(uid) && isValidRecord(...)` | 只能在自己底下新增，而且格式要對             |
-| 沒有 `update`                                         | 作業沒有修改功能，**用不到的權限就不開**     |
-| `hasOnly([...])`                                      | 不能偷塞其他欄位（例如 `isAdmin: true`）     |
-| `amount is int`、`!= 0`                               | 金額必須是非零整數                           |
-| `description.size() <= 100`                           | 跟前端的 100 字限制一致                      |
-| `createdAt == request.time`                           | 必須用 `serverTimestamp()`，不能自己填假時間 |
+| 規則                                                  | 意思                                                                    |
+| ----------------------------------------------------- | ----------------------------------------------------------------------- |
+| `allow read, delete: if isOwner(uid)`                 | 只能讀、刪路徑裡 uid 是自己的紀錄                                       |
+| `allow create: if isOwner(uid) && isValidRecord(...)` | 只能在自己底下新增，而且格式要對                                        |
+| 沒有 `update`                                         | 作業沒有修改功能，**用不到的權限就不開**                                |
+| `hasOnly([...])`                                      | 不能偷塞其他欄位（例如 `isAdmin: true`）                                |
+| `amount is int`、`!= 0`                               | 金額必須是非零整數                                                      |
+| `>= -1000000000`、`<= 1000000000`                     | 金額不超過 ±10 億，跟前端一致；也避免超大整數在 JavaScript 裡失去精確度 |
+| `description.size() <= 100`                           | 跟前端的 100 字限制一致                                                 |
+| `createdAt == request.time`                           | 必須用 `serverTimestamp()`，不能自己填假時間                            |
 
 **為什麼前端驗證過了，規則還要再驗一次？** 前端程式在使用者的瀏覽器裡，可以被改、被繞過。規則在 Firebase 伺服器上執行，使用者碰不到。
 
@@ -1080,6 +1125,8 @@ describe('新增', () => {
     ['金額是 0', { amount: 0 }],
     ['金額是小數', { amount: 1.5 }],
     ['金額是字串', { amount: '100' }],
+    ['金額超過 10 億', { amount: 1_000_000_001 }],
+    ['金額低於 -10 億', { amount: -1_000_000_001 }],
     ['說明是空字串', { description: '' }],
     ['說明超過 100 字', { description: '字'.repeat(101) }],
     ['時間不是伺服器時間', { createdAt: new Date('2000-01-01') }],
@@ -1140,9 +1187,9 @@ export default defineConfig({
 pnpm test:rules
 ```
 
-應該看到 `Tests  16 passed (16)`。
+應該看到 `Tests  18 passed (18)`。
 
-**怎麼確定測試真的有在測？** 把規則暫時改成「所有人都能讀寫」再跑一次，應該有 13 個失敗（實際做過：13 failed、3 passed，3 個 passed 是「本人可以讀／新增／刪除」）。改回來就又全過。這叫「先看它失敗」，避免寫了一堆永遠會過的假測試。
+**怎麼確定測試真的有在測？** 把規則暫時改成「所有人都能讀寫」再跑一次，應該有一大半失敗（實際做過：16 個測試時是 13 failed、3 passed，3 個 passed 是「本人可以讀／新增／刪除」）。改回來就又全過。這叫「先看它失敗」，避免寫了一堆永遠會過的假測試。
 
 ---
 
@@ -1203,8 +1250,8 @@ pnpm dev:emulator
 pnpm lint          # 程式碼檢查
 pnpm typecheck     # 型別檢查
 pnpm format        # 排版
-pnpm test          # 單元測試：19 個
-pnpm test:rules    # 安全規則測試：16 個
+pnpm test          # 單元測試：20 個
+pnpm test:rules    # 安全規則測試：18 個
 pnpm build         # 打包
 ```
 
@@ -1212,7 +1259,13 @@ pnpm build         # 打包
 
 ```ts
 import { describe, expect, it } from 'vitest'
-import { MAX_DESCRIPTION_LENGTH, calcSubtotal, parseRecordInput, removeRecord } from './records'
+import {
+  MAX_AMOUNT,
+  MAX_DESCRIPTION_LENGTH,
+  calcSubtotal,
+  parseRecordInput,
+  removeRecord,
+} from './records'
 import type { AccountRecord } from '@/types/record'
 
 describe('parseRecordInput', () => {
@@ -1234,6 +1287,17 @@ describe('parseRecordInput', () => {
   it.each(['', '0', '-5', '1.5', 'abc', '1e30'])('金額 "%s" 不合法', (amount) => {
     const result = parseRecordInput({ type: 'income', amount, description: '測試' })
     expect(result.ok).toBe(false)
+  })
+
+  it('金額剛好 10 億可以，超過不行', () => {
+    const ok = parseRecordInput({ type: 'income', amount: String(MAX_AMOUNT), description: '獎金' })
+    const tooBig = parseRecordInput({
+      type: 'income',
+      amount: String(MAX_AMOUNT + 1),
+      description: '獎金',
+    })
+    expect(ok.ok).toBe(true)
+    expect(tooBig.ok).toBe(false)
   })
 
   it('說明空白不合法', () => {
@@ -1357,7 +1421,7 @@ GitHub 上開 PR → 等 CI（4 個 job）、Vercel Preview、Sourcery 都跑完
 簡報特別提醒：「說不出自己在專案中的關鍵貢獻是什麼」是千萬不要做的事。這週可以講的技術決策：
 
 1. **資料操作順序**：為什麼先 `await` 資料庫再更新畫面，以及為什麼不用 `onSnapshot`（它會先樂觀更新，刪除失敗時畫面會閃）。
-2. **安全規則**：前端設定是公開的，所以「每人只看自己的資料」必須在規則裡做；規則還順便驗證資料格式；並用 16 個測試加上「先看它失敗」證明規則有效。
+2. **安全規則**：前端設定是公開的，所以「每人只看自己的資料」必須在規則裡做；規則還順便驗證資料格式；並用 18 個測試加上「先看它失敗」證明規則有效。
 3. **登入的三種狀態**：為什麼要區分 `undefined` 和 `null`，避免把已登入的人踢出去。
 4. **延遲初始化**：為什麼 Firebase 要在瀏覽器裡才初始化，讓 build 和 CI 不需要金鑰。
 5. **分層**：畫面只管畫面，Firebase 細節集中在 `lib/`，換資料庫只改一個檔案。
