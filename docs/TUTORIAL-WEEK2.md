@@ -1,7 +1,7 @@
 # 第二週教學：記帳小工具接上 Firebase（會員登入 + 雲端資料庫）
 
 > 接續 [第一週教學](./TUTORIAL.md)。照順序做，每一步都說明「做什麼、為什麼這樣做、做完應該看到什麼」。
-> 本文程式碼都實際跑過：ESLint、TypeScript、20 個單元測試、18 個安全規則測試、production build 全部通過；註冊、登入、新增、刪除、回訪、兩個帳號互相看不到資料，都在本機 Emulator 和線上實測過。
+> 本文程式碼都實際跑過：ESLint、TypeScript、20 個單元測試、18 個安全規則測試、production build 全部通過；R1–R7 在本機 Emulator 和線上正式環境都實測過，包含用另一個帳號的登入憑證直接呼叫 Firestore API，讀、刪、新增別人的資料都被拒絕（HTTP 403）。
 
 ---
 
