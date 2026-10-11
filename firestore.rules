@@ -1,0 +1,30 @@
+rules_version = '2';
+
+// 每個人只能讀寫自己 users/{uid} 底下的紀錄。
+// 前端的 Firebase 設定是公開的，真正擋住別人讀資料的是這份規則。
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid}/records/{recordId} {
+      allow read, delete: if isOwner(uid);
+      allow create: if isOwner(uid) && isValidRecord(request.resource.data);
+      // 作業沒有「修改」功能，用不到的權限就不開
+    }
+  }
+
+  function isOwner(uid) {
+    return request.auth != null && request.auth.uid == uid;
+  }
+
+  // 前端驗證可以被繞過，資料格式在這裡再檢查一次
+  function isValidRecord(data) {
+    return data.keys().hasOnly(['amount', 'description', 'createdAt'])
+      && data.amount is int
+      && data.amount != 0
+      && data.amount >= -1000000000
+      && data.amount <= 1000000000
+      && data.description is string
+      && data.description.size() > 0
+      && data.description.size() <= 100
+      && data.createdAt == request.time;
+  }
+}

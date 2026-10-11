@@ -1,37 +1,49 @@
 'use client'
 
 import { useState, type FormEvent } from 'react'
-import { createRecord } from '@/lib/records'
-import type { AccountRecord, RecordType } from '@/types/record'
+import { parseRecordInput } from '@/lib/records'
+import type { NewRecord, RecordType } from '@/types/record'
 
 interface RecordFormProps {
-  onAdd: (record: AccountRecord) => void
+  onAdd: (record: NewRecord) => Promise<void>
+  /** 外面還沒準備好（例如紀錄還在讀取）時停用 */
+  disabled?: boolean
 }
 
-export default function RecordForm({ onAdd }: RecordFormProps) {
+export default function RecordForm({ onAdd, disabled = false }: RecordFormProps) {
   const [type, setType] = useState<RecordType>('income')
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    const result = createRecord({ type, amount, description })
+    const result = parseRecordInput({ type, amount, description })
     if (!result.ok) {
       setError(result.error)
       return
     }
 
-    onAdd(result.record)
-    setAmount('')
-    setDescription('')
-    setError('')
+    // 先等資料庫寫入成功，才清空表單；失敗就保留使用者輸入的內容
+    setSubmitting(true)
+    try {
+      await onAdd(result.record)
+      setAmount('')
+      setDescription('')
+      setError('')
+    } catch {
+      setError('新增失敗，請稍後再試')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
     <form className="record-form" onSubmit={handleSubmit}>
-      <div className="record-form__row">
+      {/* 送出中整組停用：避免使用者趁等待時改了欄位，成功後又被清空 */}
+      <fieldset className="record-form__row" disabled={disabled || submitting}>
         <select
           aria-label="類型"
           value={type}
@@ -55,12 +67,12 @@ export default function RecordForm({ onAdd }: RecordFormProps) {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
-        <button type="submit" className="button">
-          新增紀錄
+        <button type="submit" className="button" disabled={submitting}>
+          {submitting ? '新增中…' : '新增紀錄'}
         </button>
-      </div>
+      </fieldset>
       {error && (
-        <p className="record-form__error" role="alert">
+        <p className="form-error" role="alert">
           {error}
         </p>
       )}

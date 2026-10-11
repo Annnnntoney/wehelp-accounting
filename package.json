@@ -10,25 +10,31 @@
     "typecheck": "next typegen && tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-accounting \"vitest run --config vitest.rules.config.mts\"",
+    "emulators": "firebase emulators:start --project demo-accounting",
+    "dev:emulator": "NEXT_PUBLIC_USE_FIREBASE_EMULATOR=true NEXT_PUBLIC_FIREBASE_PROJECT_ID=demo-accounting NEXT_PUBLIC_FIREBASE_API_KEY=demo-key NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=demo-accounting.firebaseapp.com next dev"
   },
   "dependencies": {
+    "firebase": "13.0.0",
     "next": "16.3.8",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "6.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
+    "firebase-tools": "15.33.0",
     "prettier": "^3.9.9",
     "typescript": "^5",
     "vitest": "^5.0.3"
   },
   "packageManager": "pnpm@12.3.4",
   "engines": {
-    "node": ">=22"
+    "node": "24.x"
   }
 }

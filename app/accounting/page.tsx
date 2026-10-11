@@ -1,31 +1,30 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
-import RecordForm from '@/components/RecordForm'
-import RecordList from '@/components/RecordList'
-import { calcSubtotal, removeRecord } from '@/lib/records'
-import type { AccountRecord } from '@/types/record'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+import { useAuth } from '@/components/AuthProvider'
+import RecordsPanel from '@/components/RecordsPanel'
 
 export default function AccountingPage() {
-  const [records, setRecords] = useState<AccountRecord[]>([])
+  const { user } = useAuth()
+  const router = useRouter()
 
-  function handleAdd(record: AccountRecord) {
-    setRecords((prev) => [record, ...prev])
-  }
+  // 確定沒登入（null）才導回首頁；undefined 代表 Firebase 還在讀登入狀態，先等
+  useEffect(() => {
+    if (user === null) router.replace('/')
+  }, [user, router])
 
-  function handleDelete(id: string) {
-    setRecords((prev) => removeRecord(prev, id))
+  if (!user) {
+    return <p className="status">載入中…</p>
   }
 
   return (
     <main className="accounting">
-      <RecordForm onAdd={handleAdd} />
-      <RecordList records={records} onDelete={handleDelete} />
-      <p className="subtotal">
-        <strong>小計：</strong>
-        {calcSubtotal(records)}
+      <p className="signed-in-as">
+        您已經使用 <strong>{user.email}</strong> 登入
       </p>
+      <RecordsPanel key={user.uid} uid={user.uid} />
       <div className="center">
         <Link href="/" className="button">
           返回首頁

@@ -44,6 +44,25 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
 
+  rules:
+    name: Firestore rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      # Firestore Emulator 需要 Java
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: pnpm install --frozen-lockfile
+      - name: 安全規則測試（Firestore Emulator，不碰正式資料庫）
+        run: pnpm test:rules
+
   # 第二階段：頁面完成後打開，見 docs/CICD.md#第二階段e2e
   # e2e:
   #   name: E2E smoke
