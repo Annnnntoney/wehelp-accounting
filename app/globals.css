@@ -51,14 +51,67 @@ body {
   font-size: 32px;
 }
 
-.banner {
+.home {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  padding: 40px 16px;
+}
+
+.signed-in {
+  text-align: center;
+}
+
+.button-group {
+  display: inline-flex;
+}
+
+.button-group .button + .button {
+  border-left: 0;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-form h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.auth-form__field {
   display: flex;
   align-items: center;
-  justify-content: center;
-  min-height: 300px;
-  padding: 16px;
-  background: #cdddef;
-  font-size: 28px;
+  gap: 8px;
+}
+
+.auth-form input {
+  width: 200px;
+  padding: 4px 8px;
+  border: 1px solid #888;
+  border-radius: 2px;
+  font-size: 16px;
+}
+
+.status {
+  padding: 24px 16px;
+  color: #777;
+  text-align: center;
+}
+
+.form-error {
+  margin: 12px 0 0;
+  color: #b00020;
+  text-align: center;
+}
+
+.button:disabled {
+  cursor: default;
+  opacity: 0.6;
 }
 
 /* 記帳頁 */
@@ -67,8 +120,15 @@ body {
   margin: 0 auto;
 }
 
+.signed-in-as {
+  margin: 0;
+  padding: 32px 16px 0;
+  font-size: 20px;
+  text-align: center;
+}
+
 .record-form {
-  padding: 40px 16px 24px;
+  padding: 24px 16px;
   border-bottom: 1px solid #ddd;
 }
 
@@ -89,12 +149,6 @@ body {
 
 .record-form input[type='number'] {
   width: 120px;
-}
-
-.record-form__error {
-  margin: 12px 0 0;
-  color: #b00020;
-  text-align: center;
 }
 
 .record-list {
